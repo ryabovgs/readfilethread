@@ -4,28 +4,30 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.IntStream;
 
-import static org.example.ThreadConstants.N_THREADS;
+import static org.example.ThreadConstants.*;
 
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class FileReaderJobExecutor {
 
-    ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     AtomicInteger readCount = new AtomicInteger();
-    CyclicBarrier cyclicBarrier = new CyclicBarrier(N_THREADS, new AggregatorThread(readCount));
+    List<List<String>> partialResults = Collections.synchronizedList(new ArrayList<>());
+    CyclicBarrier cyclicBarrier = new CyclicBarrier(THREADS_NUMBER, new AggregatorThread(readCount, partialResults));
 
-    public void run(){
-        var executorService = Executors.newFixedThreadPool(N_THREADS);
-        IntStream.range(0, N_THREADS)
+    public void run() {
+        var executorService = Executors.newFixedThreadPool(THREADS_NUMBER);
+        IntStream.range(START_NUMBER, END_NUMBER)
                 .forEach(number ->
                         executorService.submit(
-                                new FileReaderThread(lock, cyclicBarrier, readCount)));
+                                new FileReaderThread(cyclicBarrier, readCount, partialResults, number)));
         System.out.println(readCount.get());
         executorService.shutdown();
     }
