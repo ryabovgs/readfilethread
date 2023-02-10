@@ -19,7 +19,6 @@ import static org.example.ThreadConstants.*;
 @RequiredArgsConstructor
 public class FileReaderJobExecutor {
 
-    //    List<List<String>> partialResults = Collections.synchronizedList(new ArrayList<>());
     List<Map<String, AtomicInteger>> partialResults = Collections.synchronizedList(new ArrayList<>());
     CyclicBarrier cyclicBarrier = new CyclicBarrier(THREADS_NUMBER, new AggregatorThread(partialResults));
 
